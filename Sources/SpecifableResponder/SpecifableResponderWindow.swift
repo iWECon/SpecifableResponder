@@ -6,24 +6,28 @@ import UIKit
 
 open class SpecifableResponderWindow: UIWindow {
     
-    open var canResponderViews: [UIView] = []
+    open var specifableType: SpecifableType = .blockList(views: [])
     
     open override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
         
-        for view in subviews.reversed() where (canResponderViews.contains(view) || view is SpecifyProvider) {
+        for view in subviews.reversed() {
             
-            guard view.isValidResponder,
-                  view.frame.contains(point) else {
+            var isValidView = false
+            
+            switch specifableType {
+            case .blockList(let views):
+                isValidView = !views.contains(view)
+            case .whiteList(let views):
+                isValidView = views.contains(view)
+            }
+            
+            guard isValidView, view.isValidResponder, view.frame.contains(point) else {
                 continue
             }
             
             if view.point(inside: convert(point, to: view), with: event) {
                 return true
             }
-        }
-        
-        if canResponderViews.contains(self) {
-            return super.point(inside: point, with: event)
         }
         
         return false
